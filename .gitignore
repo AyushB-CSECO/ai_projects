@@ -219,3 +219,6 @@ __marimo__/
 
 # ADK secrets
 .adk
+
+# Rough python notebook
+dummy.py

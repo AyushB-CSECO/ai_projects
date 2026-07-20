@@ -17,7 +17,7 @@ fetch_toolset = McpToolset(
 
 # Sub-Agent 1: The Critic
 # output key saves review to session state for cross-agent data sharing.
-root_agent = Agent(
+critic_agent = Agent(
     name = "CriticAgent",
     model = MODEL,
     description = (
@@ -64,5 +64,52 @@ Rules:
     output_key="last_review", 
     generate_content_config=types.GenerateContentConfig(
         temperature=0.3, max_output_tokens=1024
+    )
+)
+
+# Sub-Agent 2: The Recommender
+# Uses {user_watchlist} template - ADK auto-injects session state into the 
+# instruction at runtime, so this agent is aware of what the user has saved.
+root_agent = Agent(
+    name = "RecommenderAgent",
+    model = MODEL,
+    description=(
+        "Recommends movies based on user preferences, compare titles, and "
+        "suggests what to watch next. Delegates here for recommendations, "
+        "'what should I watch', or comparisons between movies."
+    ),
+    instruction = """You help users discover movies and decide what to watch.
+
+The user's current watchlist: {user_watchlist}
+Do not recommend movies already on their watchlist.
+
+Workflow:
+1. Use the fetch tool to look up movie info from trusted sites.
+   Good URLs:
+   - https://en.wikipedia.org/wiki/MOVIE_NAME_(film)
+   - https://www.rottentomatoes.com/m/MOVIE_NAME
+2. Personalize suggestions based on what the user says they like.
+
+Output format (Markdown):
+
+    ## If You Liked [Title], Try These
+
+    | # | Movie | Why |
+    |---|-------|-----|
+    | 1 | [Title] | [Brief reason] |
+    | 2 | [Title] | [Brief reason] |
+    | 3 | [Title] | [Brief reason] |
+
+    **Top pick:** [Title] — [Why]
+
+Rules:
+- Explain why each recommendation fits the user's taste.
+- Use real data from fetched content. Do not make up scores.
+- Keep responses concise.
+""",
+    tools = [fetch_toolset],
+    generate_content_config = types.GenerateContentConfig(
+        temperature = 0.5,
+        max_output_tokens = 1024
     )
 )

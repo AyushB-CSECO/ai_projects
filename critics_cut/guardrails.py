@@ -59,7 +59,7 @@ def _extract_last_user_text(llm_request: llm_request) -> str:
 def input_guardrail(
         callback_context: CallbackContext,
         llm_request: llm_request
-) -> Optional[LlmResponse]:
+    ) -> Optional[LlmResponse]:
     """
     Block prompt-injection attempts before they reach the LLM.
     Returns an LLM response to short-circuit the call when a threat is 
@@ -87,7 +87,7 @@ def input_guardrail(
 def output_guardrail(
         callback_context: CallbackContext,
         llm_response: LlmResponse
-) -> Optional[LlmResponse]:
+    ) -> Optional[LlmResponse]:
     "Redact PII from the model's response before it reaches the user."
     if not llm_response.content or not llm_response.content.parts:
         return None 
@@ -109,4 +109,48 @@ def output_guardrail(
     if modified:
         logger.info("Output guardrail — PII redacted from response")
         return LlmResponse(content=types.Content(role="model", parts=new_parts))
+    return None
+
+# CALLBACK 3: before_tool_callback (WatchlistAgent)
+def watchlist_tool_guardrail(
+        tool: BaseTool,
+        args: dict[str, Any],
+        tool_context: ToolContext
+    ) -> Optional[dict]:
+    """Validate watchlist tool arguments before execution.
+
+    - Enforces max title length and watchlist size limits.
+    - Sanitizes title input (strip whitespace).
+    - Returns a dict to skip the tool call if validation fails;
+      returns None to proceed normally.
+    """
+    if tool.name != "manage_watchlist":
+        return None 
+    
+    title = args.get("title", "")
+    action = args.get("action", "")
+
+    # Sanitize title - strip whitespace
+    if title:
+        args["title"] = title.strip()
+
+    # Title length check
+    if title and len(title) > MAX_TITLE_LENGTH:
+        logger.warning("Tool guardrail — title too long: %d chars", len(title))
+        return {
+            "status": "error",
+            "message": f"Title must be under {MAX_TITLE_LENGTH} characters."
+        }
+    
+    # Watchlist size check on add
+    if action == "add":
+        current = tool_context.state.get("user_watchlist", [])
+        if len(current) >= MAX_WATCHLIST_SIZE:
+            logger.warning("Tool guardrail — watchlist full: %d items", len(current))
+            return {
+                "status": "error",
+                "message": f"Watchlist is full ({MAX_WATCHLIST_SIZE} movies max). Remove one first."
+            }
+    
+    logger.debug("Tool guardrail — passed for %s(%s)", tool.name, action)
     return None

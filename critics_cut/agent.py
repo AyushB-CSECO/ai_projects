@@ -120,20 +120,20 @@ recommender_agent = Agent(
 # Sub-Agent 3: The Watchlist Curator
 # before_tool_callback validates tool input before execution.
 
-root_agent = Agent(
+watchlist_agent = Agent(
     name = "WatchlistAgent",
     model = MODEL, 
     description = (
         """Manages the user's movie watchlist. Delegates here when the user
         wants to add, remove or view their watchlist."""
         ),
-    instructions="""You manage the user's personal movie watchlist.
+    instruction = """You manage the user's personal movie watchlist.
         Use the manage_watchlist tool with action='add', 'remove', or 'list'.
         After any change, show the updated watchlist as a numbered Markdown list.
         Keep responses short and helpful.
         """,
-    # tools = [tools.manage_watchlist],
-    # before_tool_callback=watchlist_tool_guardrail,
+    tools = [tools.manage_watchlist],
+    before_tool_callback=watchlist_tool_guardrail,
     generate_content_config = types.GenerateContentConfig(
         temperature=0.1, max_output_tokens=512)
 )
@@ -141,7 +141,7 @@ root_agent = Agent(
 # Root Agent: Orchestrator + Safety Guardrails
 # global_instruction is shared context appended to ALL agents in the hierarchy.
 
-root2_agent = Agent(
+root_agent = Agent(
     name = "CriticsCutDirector",
     model = MODEL, 
     description = "Orchestrator for the Critic's Cut multi-agent movie system.",

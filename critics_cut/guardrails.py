@@ -52,7 +52,8 @@ def _extract_last_user_text(llm_request: llm_request) -> str:
     """Pull the text of the most recent user message from the LLM request"""
     if ((llm_request.contents) and (llm_request.contents[-1].role == "user")):
         parts = llm_request.contents[-1] or []
-        return " ".join(p.text for p in parts if p.text)
+        output = " ".join(p[1][0].text for p in parts if p[0]=='parts')
+        return output
     return ""
 
 # CALLBACK 1: before_model_callback (root agent)

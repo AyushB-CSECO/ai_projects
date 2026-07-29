@@ -83,9 +83,6 @@ recommender_agent = Agent(
     ),
     instruction = """You help users discover movies and decide what to watch.
 
-        The user's current watchlist: {user_watchlist}
-        Do not recommend movies already on their watchlist.
-
         Workflow:
         1. Use the fetch tool to look up movie info from trusted sites.
         Good URLs:

@@ -222,3 +222,6 @@ __marimo__/
 
 # Rough python notebook
 dummy.py
+
+# Text file to save notes about repo 
+notes.txt

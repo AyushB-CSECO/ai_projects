@@ -1,7 +1,7 @@
 import asyncio
 import requests
 from google.adk.agents import LlmAgent
-from google.adk.agents import ParallelAgent
+from google.adk.agents import ParallelAgent, Agent
 from google.adk.runners import InMemoryRunner
 
 MODEL = "gemini-3.1-flash-lite"
@@ -43,7 +43,7 @@ hotel_agent = LlmAgent(
     """
 )
 
-parallel_agents = ParallelAgent(
+parallel_agents = Agent(
     name = "TravelPlannerAgent",
     sub_agents = [flight_agent, sightseeing_agent, hotel_agent],
     description = """You are travel planner. Fetch flight, sightseeing & hotel agents in parallel and create
@@ -53,7 +53,8 @@ parallel_agents = ParallelAgent(
 async def main():
     runner = InMemoryRunner(agent = hotel_agent)
     user_query = """I am from Delhi, India. I am planning for vacation in Kerela.
-      Help me with flights, sightseeing options and hotels."""
+      Help me with flights, sightseeing options and hotels. I am traveling on 8th Aug'26
+      . I am travelling solo for 2 days. I am most interested in Munnar. My budget is Rs.35000."""
     event = await runner.run_debug(user_query)
 
 if __name__ == "__main__":
